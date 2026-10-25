@@ -37,15 +37,74 @@
     }
   </script>
   <style>
-    body { background-color: #0f1323; color: #dfe1f9; font-family: 'Manrope', sans-serif; }
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
-    .hidden-view { display: none !important; }
+    body {
+      background-color: #0f1323;
+      color: #dfe1f9;
+      font-family: 'Manrope', sans-serif;
+      overflow-x: hidden;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+    }
+    .hidden-view {
+      display: none !important;
+    }
+
+    /* Transisi Halus Antar Halaman & Komponen */
+    .view-transition {
+      transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .view-hidden-state {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    .view-visible-state {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-card {
+      animation: fadeInUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    button, input, .cert-item-card {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-1.5px);
+    }
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .cert-item-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);
+    }
+
+    @keyframes shakeError {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+    .shake {
+      animation: shakeError 0.3s ease-in-out;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-  <!-- ================= HALAMAN LOGIN (DESAIN STITCH) ================= -->
-  <div id="login-view" class="min-h-screen w-full flex flex-col lg:flex-row">
+  <!-- ================= HALAMAN LOGIN ================= -->
+  <div id="login-view" class="view-transition view-visible-state min-h-screen w-full flex flex-col lg:flex-row">
     <section class="w-full lg:w-[44%] min-h-screen bg-[#0D101B] flex flex-col justify-between p-8 sm:p-12 lg:p-16 border-r border-outline-variant/15">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -74,19 +133,20 @@
             <label class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Seafarer ID / Username</label>
             <div class="relative flex items-center">
               <span class="material-symbols-outlined absolute left-4 text-outline">badge</span>
-              <input id="login-user" class="w-full pl-11 pr-4 py-3.5 bg-[#161B2E] border border-[#2A314B] rounded-xl text-sm text-on-surface font-mono focus:border-primary focus:outline-none" type="text" value="William Sianipar" required/>
+              <input id="login-user" class="w-full pl-11 pr-4 py-3.5 bg-[#161B2E] border border-[#2A314B] rounded-xl text-sm text-on-surface font-mono focus:border-primary focus:outline-none" type="text" placeholder="Masukkan Username" value="William Sianipar" required/>
             </div>
           </div>
 
           <div class="space-y-2">
-            <label class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Security PIN (Default: 1234)</label>
-            <div class="relative flex items-center">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Security PIN</label>
+            <div class="relative flex items-center" id="pin-box">
               <span class="material-symbols-outlined absolute left-4 text-outline">lock</span>
-              <input id="login-pin" class="w-full pl-11 pr-4 py-3.5 bg-[#161B2E] border border-[#2A314B] rounded-xl text-sm text-on-surface font-mono focus:border-primary focus:outline-none" placeholder="Masukkan PIN: 1234" type="password" required/>
+              <input id="login-pin" class="w-full pl-11 pr-4 py-3.5 bg-[#161B2E] border border-[#2A314B] rounded-xl text-sm text-on-surface font-mono focus:border-primary focus:outline-none" placeholder="••••••••" type="password" required/>
             </div>
+            <p id="login-error" class="text-xs text-error font-mono hidden pt-1">Akses ditolak. PIN keamanan tidak valid.</p>
           </div>
 
-          <button class="w-full py-4 px-6 bg-[#3D5CFF] hover:bg-[#324de0] text-white font-headline font-bold text-sm tracking-wider uppercase rounded-xl shadow-lg transition-all flex items-center justify-center gap-2" type="submit">
+          <button class="w-full py-4 px-6 bg-[#3D5CFF] hover:bg-[#324de0] text-white font-headline font-bold text-sm tracking-wider uppercase rounded-xl shadow-lg flex items-center justify-center gap-2" type="submit">
             <span>SIGN IN PORTAL</span>
             <span class="material-symbols-outlined text-lg">arrow_forward</span>
           </button>
@@ -128,8 +188,8 @@
     </section>
   </div>
 
-  <!-- ================= HALAMAN DASHBOARD (DESAIN STITCH) ================= -->
-  <div id="dashboard-view" class="hidden-view flex-1 flex flex-col">
+  <!-- ================= HALAMAN DASHBOARD ================= -->
+  <div id="dashboard-view" class="view-transition view-hidden-state hidden-view flex-1 flex flex-col">
     <header class="sticky top-0 z-50 h-16 w-full bg-[#0f1323]/95 backdrop-blur-md border-b border-outline-variant/20 px-4 lg:px-8 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-3">
@@ -141,9 +201,9 @@
             <span class="font-mono text-[10px] text-outline tracking-widest uppercase">REVALIDATION TRACKER</span>
           </div>
         </div>
-        <div id="sync-badge" class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high border border-outline-variant/20">
-          <span class="w-2 h-2 rounded-full bg-tertiary"></span>
-          <span class="font-mono text-[11px] text-on-surface-variant" id="sync-text">Mode Lokal / Siap Sinkron</span>
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high border border-outline-variant/20">
+          <span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+          <span class="font-mono text-[11px] text-on-surface-variant" id="sync-text">Siap Sinkron</span>
         </div>
       </div>
 
@@ -159,7 +219,7 @@
 
     <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
       
-      <!-- KOLOM KIRI: FORM INPUT SERTIFIKAT -->
+      <!-- KOLOM KIRI: FORM INPUT & PENGATURAN -->
       <aside class="lg:col-span-4 xl:col-span-3 flex flex-col gap-6">
         <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/20 shadow-lg">
           <div class="flex items-center justify-between mb-4">
@@ -187,7 +247,7 @@
               <input id="cert-notes" type="text" placeholder="Contoh: STIP Jakarta / Agen..." class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg text-sm text-on-surface px-3 py-2.5 focus:border-primary focus:outline-none"/>
             </div>
 
-            <button type="submit" id="btn-submit" class="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-[#2f69fe] to-[#1e40af] hover:opacity-95 text-white font-headline font-semibold text-sm shadow-lg flex items-center justify-center gap-2 transition-all">
+            <button type="submit" id="btn-submit" class="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-[#2f69fe] to-[#1e40af] hover:opacity-95 text-white font-headline font-semibold text-sm shadow-lg flex items-center justify-center gap-2">
               <span class="material-symbols-outlined text-lg">bolt</span>
               Simpan & Hitung Hari Kerja
             </button>
@@ -203,17 +263,17 @@
           
           <div>
             <label class="block text-[10px] font-mono uppercase text-outline mb-1">URL Web App Google Sheets</label>
-            <input id="cfg-sheet" type="text" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg text-xs text-on-surface font-mono px-3 py-2"/>
+            <input id="cfg-sheet" type="text" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg text-xs text-on-surface font-mono px-3 py-2 focus:border-primary focus:outline-none"/>
           </div>
 
           <div>
             <label class="block text-[10px] font-mono uppercase text-outline mb-1">Telegram Bot Token</label>
-            <input id="cfg-token" type="password" placeholder="7123456:AAHxyz..." class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg text-xs text-on-surface font-mono px-3 py-2"/>
+            <input id="cfg-token" type="password" placeholder="7123456:AAHxyz..." class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg text-xs text-on-surface font-mono px-3 py-2 focus:border-primary focus:outline-none"/>
           </div>
 
           <div>
             <label class="block text-[10px] font-mono uppercase text-outline mb-1">Telegram Chat ID</label>
-            <input id="cfg-chatid" type="text" placeholder="123456789" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg text-xs text-on-surface font-mono px-3 py-2"/>
+            <input id="cfg-chatid" type="text" placeholder="123456789" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg text-xs text-on-surface font-mono px-3 py-2 focus:border-primary focus:outline-none"/>
           </div>
 
           <div class="flex gap-2">
@@ -227,7 +287,7 @@
         </div>
       </aside>
 
-      <!-- KOLOM TENGAH & KANAN: KARTU METRIK & DAFTAR SERTIFIKAT -->
+      <!-- KOLOM KANAN: KARTU METRIK & DAFTAR SERTIFIKAT -->
       <section class="lg:col-span-8 xl:col-span-9 flex flex-col gap-6">
         
         <!-- 3 KARTU RINGKASAN -->
@@ -274,13 +334,12 @@
     let certs = JSON.parse(localStorage.getItem('navicert_data')) || [];
     let config = JSON.parse(localStorage.getItem('navicert_config')) || { sheetUrl: '', token: '', chatId: '' };
 
-    // Set nilai awal input tanggal & konfigurasi
     document.getElementById('cert-date').valueAsDate = new Date();
     document.getElementById('cfg-sheet').value = config.sheetUrl || '';
     document.getElementById('cfg-token').value = config.token || '';
     document.getElementById('cfg-chatid').value = config.chatId || '';
 
-    // Fungsi Hitung Hari Kerja (Melompati Sabtu = 6 & Minggu = 0)
+    // Hitung Hari Kerja (Lewati Sabtu & Minggu)
     function tambahHariKerja(tanggalMulai, jumlahHari) {
       let tanggal = new Date(tanggalMulai);
       let terhitung = 0;
@@ -297,27 +356,68 @@
     function formatTanggalIndo(strTanggal) {
       if (!strTanggal) return '-';
       const d = new Date(strTanggal);
+      if (isNaN(d)) return strTanggal;
       return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
-    // Login Handler
+    // Fungsi Transisi Halaman Halus
+    function beralihKeDashboard() {
+      const loginView = document.getElementById('login-view');
+      const dashView = document.getElementById('dashboard-view');
+      
+      loginView.classList.remove('view-visible-state');
+      loginView.classList.add('view-hidden-state');
+      
+      setTimeout(() => {
+        loginView.classList.add('hidden-view');
+        dashView.classList.remove('hidden-view');
+        requestAnimationFrame(() => {
+          dashView.classList.remove('view-hidden-state');
+          dashView.classList.add('view-visible-state');
+        });
+        muatDataDariDatabase();
+      }, 320);
+    }
+
+    function beralihKeLogin() {
+      const loginView = document.getElementById('login-view');
+      const dashView = document.getElementById('dashboard-view');
+
+      dashView.classList.remove('view-visible-state');
+      dashView.classList.add('view-hidden-state');
+
+      setTimeout(() => {
+        dashView.classList.add('hidden-view');
+        loginView.classList.remove('hidden-view');
+        requestAnimationFrame(() => {
+          loginView.classList.remove('view-hidden-state');
+          loginView.classList.add('view-visible-state');
+        });
+        document.getElementById('login-pin').value = '';
+      }, 320);
+    }
+
+    // Login Handler (Tanpa membocorkan PIN)
     document.getElementById('login-form').addEventListener('submit', function(e) {
       e.preventDefault();
-      const pin = document.getElementById('login-pin').value;
-      if (pin === '1234') {
-        document.getElementById('login-view').classList.add('hidden-view');
-        document.getElementById('dashboard-view').classList.remove('hidden-view');
-        muatDataDariDatabase();
+      const pinInput = document.getElementById('login-pin');
+      const pinBox = document.getElementById('pin-box');
+      const errText = document.getElementById('login-error');
+
+      if (pinInput.value === '1234') {
+        errText.classList.add('hidden');
+        beralihKeDashboard();
       } else {
-        alert('PIN Akses salah! Gunakan PIN default: 1234');
+        errText.classList.remove('hidden');
+        pinBox.classList.remove('shake');
+        void pinBox.offsetWidth; // Trigger reflow
+        pinBox.classList.add('shake');
+        pinInput.value = '';
+        pinInput.focus();
       }
     });
 
-    document.getElementById('btn-logout').addEventListener('click', function() {
-      document.getElementById('dashboard-view').classList.add('hidden-view');
-      document.getElementById('login-view').classList.remove('hidden-view');
-      document.getElementById('login-pin').value = '';
-    });
+    document.getElementById('btn-logout').addEventListener('click', beralihKeLogin);
 
     // Simpan Konfigurasi
     function simpanKonfigurasi() {
@@ -331,15 +431,34 @@
       muatDataDariDatabase();
     }
 
+    // Kirim Data ke Google Sheets dengan Content-Type text/plain agar lolos CORS
+    async function kirimKeSheet(payloadObj) {
+      if (!config.sheetUrl) return;
+      const syncText = document.getElementById('sync-text');
+      syncText.textContent = 'Menyimpan ke Sheet...';
+      try {
+        await fetch(config.sheetUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payloadObj)
+        });
+        syncText.textContent = 'Tersimpan di Google Sheets';
+      } catch (err) {
+        console.error('Gagal kirim ke Sheet:', err);
+        syncText.textContent = 'Gagal Simpan ke Sheet';
+      }
+    }
+
     // Ambil Data dari Google Sheets
     async function muatDataDariDatabase() {
       renderList();
       if (!config.sheetUrl) return;
       
       const syncText = document.getElementById('sync-text');
-      syncText.textContent = 'Menyinkronkan Google Sheets...';
+      syncText.textContent = 'Menyinkronkan...';
       try {
-        const res = await fetch(config.sheetUrl);
+        const res = await fetch(config.sheetUrl + '?t=' + Date.now());
         const data = await res.json();
         if (Array.isArray(data)) {
           certs = data;
@@ -348,7 +467,7 @@
           syncText.textContent = 'Google Sheets Terhubung';
         }
       } catch (err) {
-        syncText.textContent = 'Mode Offline (Lokal)';
+        syncText.textContent = 'Mode Lokal Aktif';
       }
     }
 
@@ -379,56 +498,36 @@
       document.getElementById('cert-form').reset();
       document.getElementById('cert-date').valueAsDate = new Date();
 
-      // Kirim Notifikasi ke Telegram
       kirimTelegram(`⚓ [PENGURUSAN SERTIFIKAT BARU]\n\n📄 Sertifikat: ${name}\n📅 Selesai Diklat: ${formatTanggalIndo(trainingDate)}\n🌐 Target Online (10 HK): ${formatTanggalIndo(onlineEst)}\n📘 Target Fisik (15 HK): ${formatTanggalIndo(physicalEst)}\n📝 Catatan: ${notes || '-'}`);
 
-      // Simpan ke Google Sheets
-      if (config.sheetUrl) {
-        fetch(config.sheetUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify(itemBaru)
-        });
-      }
+      await kirimKeSheet(itemBaru);
     });
 
     // Ubah Status Sertifikat
-    function ubahStatus(id, statusBaru) {
-      certs = certs.map(c => c.id === id ? { ...c, status: statusBaru } : c);
+    async function ubahStatus(id, statusBaru) {
+      certs = certs.map(c => String(c.id) === String(id) ? { ...c, status: statusBaru } : c);
       localStorage.setItem('navicert_data', JSON.stringify(certs));
       renderList();
 
-      const item = certs.find(c => c.id === id);
+      const item = certs.find(c => String(c.id) === String(id));
       if (item) {
         kirimTelegram(`🔄 [UPDATE STATUS SERTIFIKAT]\n\n📄 Sertifikat: ${item.name}\n✅ Status Baru: ${statusBaru}`);
       }
 
-      if (config.sheetUrl) {
-        fetch(config.sheetUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify({ action: 'update', id, status: statusBaru })
-        });
-      }
+      await kirimKeSheet({ action: 'update', id: id, status: statusBaru });
     }
 
     // Hapus Sertifikat
-    function hapusSertifikat(id) {
+    async function hapusSertifikat(id) {
       if (!confirm('Hapus catatan sertifikat ini?')) return;
-      certs = certs.filter(c => c.id !== id);
+      certs = certs.filter(c => String(c.id) !== String(id));
       localStorage.setItem('navicert_data', JSON.stringify(certs));
       renderList();
 
-      if (config.sheetUrl) {
-        fetch(config.sheetUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify({ action: 'delete', id })
-        });
-      }
+      await kirimKeSheet({ action: 'delete', id: id });
     }
 
-    // Render Daftar Sertifikat ke Layar
+    // Render Daftar Sertifikat
     function renderList() {
       const container = document.getElementById('cert-list');
       const keyword = document.getElementById('search-input').value.toLowerCase();
@@ -452,17 +551,18 @@
       );
 
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="text-center py-10 text-outline text-sm font-mono">Belum ada data pengurusan sertifikat.</div>`;
+        container.innerHTML = `<div class="text-center py-10 text-outline text-sm font-mono animate-card">Belum ada data pengurusan sertifikat.</div>`;
         return;
       }
 
-      filtered.forEach(c => {
+      filtered.forEach((c, idx) => {
         let badgeColor = 'bg-primary/20 text-blue-300 border-primary/40';
         if (c.status === 'Menunggu Fisik') badgeColor = 'bg-secondary/20 text-secondary border-secondary/40';
         if (c.status === 'Selesai') badgeColor = 'bg-tertiary/20 text-tertiary border-tertiary/40';
 
         const card = document.createElement('div');
-        card.className = 'bg-surface-container-low hover:bg-surface-container-high border border-outline-variant/20 rounded-xl p-4 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4';
+        card.style.animationDelay = `${idx * 40}ms`;
+        card.className = 'cert-item-card animate-card bg-surface-container-low hover:bg-surface-container-high border border-outline-variant/20 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4';
         card.innerHTML = `
           <div class="space-y-1">
             <div class="flex items-center gap-2.5">
@@ -485,9 +585,9 @@
               <span class="text-xs font-semibold text-secondary">${formatTanggalIndo(c.physicalEst)}</span>
             </div>
             <div class="flex items-center gap-1.5">
-              ${c.status === 'Tahap Online' ? `<button onclick="ubahStatus(${c.id}, 'Menunggu Fisik')" class="px-2.5 py-1.5 rounded-lg bg-secondary/20 hover:bg-secondary/30 text-secondary text-xs font-semibold">Ke Tahap Fisik</button>` : ''}
-              ${c.status === 'Menunggu Fisik' ? `<button onclick="ubahStatus(${c.id}, 'Selesai')" class="px-2.5 py-1.5 rounded-lg bg-tertiary/20 hover:bg-tertiary/30 text-tertiary text-xs font-semibold">Tandai Selesai</button>` : ''}
-              <button onclick="hapusSertifikat(${c.id})" class="p-1.5 rounded-lg bg-error/10 hover:bg-error/20 text-error">
+              ${c.status === 'Tahap Online' ? `<button onclick="ubahStatus('${c.id}', 'Menunggu Fisik')" class="px-2.5 py-1.5 rounded-lg bg-secondary/20 hover:bg-secondary/30 text-secondary text-xs font-semibold">Ke Tahap Fisik</button>` : ''}
+              ${c.status === 'Menunggu Fisik' ? `<button onclick="ubahStatus('${c.id}', 'Selesai')" class="px-2.5 py-1.5 rounded-lg bg-tertiary/20 hover:bg-tertiary/30 text-tertiary text-xs font-semibold">Tandai Selesai</button>` : ''}
+              <button onclick="hapusSertifikat('${c.id}')" class="p-1.5 rounded-lg bg-error/10 hover:bg-error/20 text-error">
                 <span class="material-symbols-outlined text-base">delete</span>
               </button>
             </div>
@@ -497,7 +597,6 @@
       });
     }
 
-    // Fungsi Kirim Pesan Telegram dari Website
     function kirimTelegram(pesan) {
       if (!config.token || !config.chatId) return;
       const url = `https://api.telegram.org/bot${config.token}/sendMessage?chat_id=${config.chatId}&text=${encodeURIComponent(pesan)}`;
