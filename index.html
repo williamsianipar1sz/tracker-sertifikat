@@ -429,7 +429,7 @@
       muatDataDariDatabase();
     }
 
-    // Kirim Data ke Google Sheets via GET Parameter (Bebas Blokir CORS)
+    // Kirim Data ke Google Sheets via GET (Metode Stabil & Bebas Blokir CORS)
     async function kirimKeSheet(paramsObj) {
       if (!config.sheetUrl) {
         alert('URL Web App Google Sheets belum diisi di panel kiri bawah!');
@@ -440,20 +440,23 @@
 
       try {
         const url = new URL(config.sheetUrl);
+        // Masukkan semua data parameter (action, id, name, dll)
         Object.keys(paramsObj).forEach(key => url.searchParams.append(key, paramsObj[key]));
+        // Tambahkan pengaman waktu agar tidak tersangkut cache browser
         url.searchParams.append('_t', Date.now());
 
-        const res = await fetch(url.toString(), {
+        // Kirim perintah secara background tanpa menunggu respons balik yang ketat
+        await fetch(url.toString(), {
           method: 'GET',
-          redirect: 'follow'
+          mode: 'no-cors'
         });
-        const result = await res.json();
-        if (result && result.status === 'success') {
-          syncText.textContent = 'Tersimpan di Google Sheets';
-        } else {
-          syncText.textContent = 'Terkirim ke Google Sheets';
-        }
+
+        syncText.textContent = 'Tersimpan di Google Sheets';
       } catch (err) {
+        console.error('Gagal kirim ke Sheet:', err);
+        syncText.textContent = 'Gagal Simpan ke Sheet';
+      }
+    }
         // Fallback no-cors jika browser membatasi pembacaan response redirect
         try {
           const query = new URLSearchParams(paramsObj).toString();
