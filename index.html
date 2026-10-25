@@ -5,7 +5,6 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>NAVICERT // Seafarer Certificate Tracker (Supabase)</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <!-- Library Resmi Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -82,12 +81,12 @@
           <p class="text-sm text-on-surface-variant">Pantau proses revalidasi sertifikat dengan database cloud profesional.</p>
         </div>
 
-        <form id="login-form" class="space-y-5">
+        <div class="space-y-5">
           <div class="space-y-2">
             <label class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Seafarer ID / Username</label>
             <div class="relative flex items-center">
               <span class="material-symbols-outlined absolute left-4 text-outline">badge</span>
-              <input id="login-user" class="w-full pl-11 pr-4 py-3.5 bg-[#161B2E] border border-[#2A314B] rounded-xl text-sm text-on-surface font-mono focus:border-primary focus:outline-none" type="text" value="William Sianipar" required/>
+              <input id="login-user" class="w-full pl-11 pr-4 py-3.5 bg-[#161B2E] border border-[#2A314B] rounded-xl text-sm text-on-surface font-mono focus:border-primary focus:outline-none" type="text" value="William Sianipar"/>
             </div>
           </div>
 
@@ -95,16 +94,16 @@
             <label class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Security PIN</label>
             <div class="relative flex items-center" id="pin-box">
               <span class="material-symbols-outlined absolute left-4 text-outline">lock</span>
-              <input id="login-pin" class="w-full pl-11 pr-4 py-3.5 bg-[#161B2E] border border-[#2A314B] rounded-xl text-sm text-on-surface font-mono focus:border-primary focus:outline-none" placeholder="••••••••" type="password" required/>
+              <input id="login-pin" class="w-full pl-11 pr-4 py-3.5 bg-[#161B2E] border border-[#2A314B] rounded-xl text-sm text-on-surface font-mono focus:border-primary focus:outline-none" placeholder="Masukkan PIN (1234)" type="password"/>
             </div>
             <p id="login-error" class="text-xs text-error font-mono hidden pt-1">Akses ditolak. PIN keamanan tidak valid.</p>
           </div>
 
-          <button class="w-full py-4 px-6 bg-[#3D5CFF] hover:bg-[#324de0] text-white font-headline font-bold text-sm tracking-wider uppercase rounded-xl shadow-lg flex items-center justify-center gap-2" type="submit">
+          <button id="btn-login-submit" class="w-full py-4 px-6 bg-[#3D5CFF] hover:bg-[#324de0] text-white font-headline font-bold text-sm tracking-wider uppercase rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer">
             <span>SIGN IN PORTAL</span>
             <span class="material-symbols-outlined text-lg">arrow_forward</span>
           </button>
-        </form>
+        </div>
       </div>
 
       <div class="text-xs text-outline font-mono">
@@ -287,12 +286,10 @@
     document.getElementById('cfg-token').value = config.token || '';
     document.getElementById('cfg-chatid').value = config.chatId || '';
 
-    // Inisialisasi Klien Supabase jika URL & Key tersedia
     if (config.supabaseUrl && config.supabaseKey) {
       supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseKey);
     }
 
-    // Hitung Hari Kerja (Lewati Sabtu & Minggu)
     function tambahHariKerja(tanggalMulai, jumlahHari) {
       const parts = tanggalMulai.split('-');
       let tanggal = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
@@ -354,9 +351,9 @@
       }, 320);
     }
 
- // Login Handler yang Aman dan Mencegah Refresh Halaman
-    document.getElementById('login-form').addEventListener('submit', function(e) {
-      e.preventDefault(); // Mencegah halaman mereset/refresh
+    // Perbaikan Tombol Login Langsung (Menggunakan Event Listener Klik murni agar tidak ada form submit bawaan)
+    document.getElementById('btn-login-submit').addEventListener('click', function(e) {
+      e.preventDefault();
       const pinInput = document.getElementById('login-pin').value.trim();
       const pinBox = document.getElementById('pin-box');
       const errText = document.getElementById('login-error');
@@ -367,7 +364,7 @@
       } else {
         errText.classList.remove('hidden');
         pinBox.classList.remove('shake');
-        void pinBox.offsetWidth; // Trigger reflow untuk animasi getar
+        void pinBox.offsetWidth;
         pinBox.classList.add('shake');
         document.getElementById('login-pin').value = '';
         document.getElementById('login-pin').focus();
@@ -388,11 +385,10 @@
       if (config.supabaseUrl && config.supabaseKey) {
         supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseKey);
       }
-      alert('Konfigurasi Supabase & Telegram berhasil disimpan!');
+      alert('Konfigurasi berhasil disimpan!');
       muatDataDariSupabase();
     }
 
-    // Ambil Data dari Supabase
     async function muatDataDariSupabase() {
       if (!supabaseClient) {
         document.getElementById('sync-text').textContent = 'Supabase Belum Dikonfigurasi';
@@ -410,7 +406,6 @@
 
         if (error) throw error;
 
-        // Petakan nama kolom database ke variabel frontend
         certs = (data || []).map(item => ({
           id: String(item.id),
           name: item.name,
@@ -429,7 +424,6 @@
       }
     }
 
-    // Tambah Data ke Supabase
     document.getElementById('cert-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       if (!supabaseClient) {
@@ -473,7 +467,6 @@
       }
     });
 
-    // Ubah Status di Supabase
     async function ubahStatus(id, statusBaru) {
       if (!supabaseClient) return;
       try {
@@ -495,7 +488,6 @@
       }
     }
 
-    // Hapus Data di Supabase
     async function hapusSertifikat(id) {
       if (!confirm('Hapus catatan sertifikat ini dari database?')) return;
       if (!supabaseClient) return;
@@ -514,7 +506,6 @@
       }
     }
 
-    // Render Daftar Tampilan HTML
     function renderList() {
       const container = document.getElementById('cert-list');
       const keyword = document.getElementById('search-input').value.toLowerCase();
