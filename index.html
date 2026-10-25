@@ -49,8 +49,6 @@
     .hidden-view {
       display: none !important;
     }
-
-    /* Transisi Halus Antar Halaman & Komponen */
     .view-transition {
       transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -62,21 +60,13 @@
       opacity: 1;
       transform: translateY(0);
     }
-
     @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(12px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .animate-card {
       animation: fadeInUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
-
     button, input, .cert-item-card {
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -90,7 +80,6 @@
       transform: translateY(-2px);
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);
     }
-
     @keyframes shakeError {
       0%, 100% { transform: translateX(0); }
       25% { transform: translateX(-6px); }
@@ -202,7 +191,7 @@
           </div>
         </div>
         <div class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high border border-outline-variant/20">
-          <span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+          <span id="sync-dot" class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
           <span class="font-mono text-[11px] text-on-surface-variant" id="sync-text">Siap Sinkron</span>
         </div>
       </div>
@@ -339,9 +328,10 @@
     document.getElementById('cfg-token').value = config.token || '';
     document.getElementById('cfg-chatid').value = config.chatId || '';
 
-    // Hitung Hari Kerja (Lewati Sabtu & Minggu)
+    // Hitung Hari Kerja (Lewati Sabtu = 6 & Minggu = 0)
     function tambahHariKerja(tanggalMulai, jumlahHari) {
-      let tanggal = new Date(tanggalMulai);
+      const parts = tanggalMulai.split('-');
+      let tanggal = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
       let terhitung = 0;
       while (terhitung < jumlahHari) {
         tanggal.setDate(tanggal.getDate() + 1);
@@ -350,17 +340,25 @@
           terhitung++;
         }
       }
-      return tanggal.toISOString().split('T')[0];
+      const yyyy = tanggal.getFullYear();
+      const mm = String(tanggal.getMonth() + 1).padStart(2, '0');
+      const dd = String(tanggal.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
     }
 
     function formatTanggalIndo(strTanggal) {
       if (!strTanggal) return '-';
-      const d = new Date(strTanggal);
-      if (isNaN(d)) return strTanggal;
-      return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+      const parts = String(strTanggal).substring(0, 10).split('-');
+      if (parts.length === 3) {
+        const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        if (!isNaN(d)) {
+          return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+      }
+      return strTanggal;
     }
 
-    // Fungsi Transisi Halaman Halus
+    // Transisi Halaman Halus
     function beralihKeDashboard() {
       const loginView = document.getElementById('login-view');
       const dashView = document.getElementById('dashboard-view');
@@ -410,7 +408,7 @@
       } else {
         errText.classList.remove('hidden');
         pinBox.classList.remove('shake');
-        void pinBox.offsetWidth; // Trigger reflow
+        void pinBox.offsetWidth;
         pinBox.classList.add('shake');
         pinInput.value = '';
         pinInput.focus();
@@ -427,26 +425,44 @@
         chatId: document.getElementById('cfg-chatid').value.trim()
       };
       localStorage.setItem('navicert_config', JSON.stringify(config));
-      alert('Pengaturan berhasil disimpan!');
+      alert('Koneksi berhasil disimpan!');
       muatDataDariDatabase();
     }
 
-    // Kirim Data ke Google Sheets dengan Content-Type text/plain agar lolos CORS
-    async function kirimKeSheet(payloadObj) {
-      if (!config.sheetUrl) return;
+    // Kirim Data ke Google Sheets via GET Parameter (Bebas Blokir CORS)
+    async function kirimKeSheet(paramsObj) {
+      if (!config.sheetUrl) {
+        alert('URL Web App Google Sheets belum diisi di panel kiri bawah!');
+        return;
+      }
       const syncText = document.getElementById('sync-text');
       syncText.textContent = 'Menyimpan ke Sheet...';
+
       try {
-        await fetch(config.sheetUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payloadObj)
+        const url = new URL(config.sheetUrl);
+        Object.keys(paramsObj).forEach(key => url.searchParams.append(key, paramsObj[key]));
+        url.searchParams.append('_t', Date.now());
+
+        const res = await fetch(url.toString(), {
+          method: 'GET',
+          redirect: 'follow'
         });
-        syncText.textContent = 'Tersimpan di Google Sheets';
+        const result = await res.json();
+        if (result && result.status === 'success') {
+          syncText.textContent = 'Tersimpan di Google Sheets';
+        } else {
+          syncText.textContent = 'Terkirim ke Google Sheets';
+        }
       } catch (err) {
-        console.error('Gagal kirim ke Sheet:', err);
-        syncText.textContent = 'Gagal Simpan ke Sheet';
+        // Fallback no-cors jika browser membatasi pembacaan response redirect
+        try {
+          const query = new URLSearchParams(paramsObj).toString();
+          await fetch(`${config.sheetUrl}?${query}&_t=${Date.now()}`, { mode: 'no-cors' });
+          syncText.textContent = 'Tersimpan di Google Sheets';
+        } catch (e2) {
+          console.error('Gagal kirim ke Sheet:', e2);
+          syncText.textContent = 'Gagal Simpan ke Sheet';
+        }
       }
     }
 
@@ -458,7 +474,10 @@
       const syncText = document.getElementById('sync-text');
       syncText.textContent = 'Menyinkronkan...';
       try {
-        const res = await fetch(config.sheetUrl + '?t=' + Date.now());
+        const res = await fetch(`${config.sheetUrl}?_t=${Date.now()}`, {
+          method: 'GET',
+          redirect: 'follow'
+        });
         const data = await res.json();
         if (Array.isArray(data)) {
           certs = data;
@@ -467,6 +486,7 @@
           syncText.textContent = 'Google Sheets Terhubung';
         }
       } catch (err) {
+        console.error('Error load sheet:', err);
         syncText.textContent = 'Mode Lokal Aktif';
       }
     }
@@ -476,19 +496,19 @@
       e.preventDefault();
       const name = document.getElementById('cert-name').value.trim();
       const trainingDate = document.getElementById('cert-date').value;
-      const notes = document.getElementById('cert-notes').value.trim();
+      const notes = document.getElementById('cert-notes').value.trim() || '-';
 
       const onlineEst = tambahHariKerja(trainingDate, 10);
       const physicalEst = tambahHariKerja(trainingDate, 15);
 
       const itemBaru = {
         action: 'add',
-        id: Date.now(),
-        name,
-        trainingDate,
-        notes,
-        onlineEst,
-        physicalEst,
+        id: String(Date.now()),
+        name: name,
+        trainingDate: trainingDate,
+        notes: notes,
+        onlineEst: onlineEst,
+        physicalEst: physicalEst,
         status: 'Tahap Online'
       };
 
@@ -498,7 +518,7 @@
       document.getElementById('cert-form').reset();
       document.getElementById('cert-date').valueAsDate = new Date();
 
-      kirimTelegram(`⚓ [PENGURUSAN SERTIFIKAT BARU]\n\n📄 Sertifikat: ${name}\n📅 Selesai Diklat: ${formatTanggalIndo(trainingDate)}\n🌐 Target Online (10 HK): ${formatTanggalIndo(onlineEst)}\n📘 Target Fisik (15 HK): ${formatTanggalIndo(physicalEst)}\n📝 Catatan: ${notes || '-'}`);
+      kirimTelegram(`⚓ [PENGURUSAN SERTIFIKAT BARU]\n\n📄 Sertifikat: ${name}\n📅 Selesai Diklat: ${formatTanggalIndo(trainingDate)}\n🌐 Target Online (10 HK): ${formatTanggalIndo(onlineEst)}\n📘 Target Fisik (15 HK): ${formatTanggalIndo(physicalEst)}\n📝 Catatan: ${notes}`);
 
       await kirimKeSheet(itemBaru);
     });
@@ -514,7 +534,7 @@
         kirimTelegram(`🔄 [UPDATE STATUS SERTIFIKAT]\n\n📄 Sertifikat: ${item.name}\n✅ Status Baru: ${statusBaru}`);
       }
 
-      await kirimKeSheet({ action: 'update', id: id, status: statusBaru });
+      await kirimKeSheet({ action: 'update', id: String(id), status: statusBaru });
     }
 
     // Hapus Sertifikat
@@ -524,7 +544,7 @@
       localStorage.setItem('navicert_data', JSON.stringify(certs));
       renderList();
 
-      await kirimKeSheet({ action: 'delete', id: id });
+      await kirimKeSheet({ action: 'delete', id: String(id) });
     }
 
     // Render Daftar Sertifikat
@@ -546,8 +566,8 @@
       document.getElementById('stat-done').textContent = countDone;
 
       const filtered = certs.filter(c => 
-        c.name.toLowerCase().includes(keyword) || 
-        (c.notes && c.notes.toLowerCase().includes(keyword))
+        String(c.name).toLowerCase().includes(keyword) || 
+        (c.notes && String(c.notes).toLowerCase().includes(keyword))
       );
 
       if (filtered.length === 0) {
