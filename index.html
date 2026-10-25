@@ -354,22 +354,23 @@
       }, 320);
     }
 
+ // Login Handler yang Aman dan Mencegah Refresh Halaman
     document.getElementById('login-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const pinInput = document.getElementById('login-pin');
+      e.preventDefault(); // Mencegah halaman mereset/refresh
+      const pinInput = document.getElementById('login-pin').value.trim();
       const pinBox = document.getElementById('pin-box');
       const errText = document.getElementById('login-error');
 
-      if (pinInput.value === '1234') {
+      if (pinInput === '1234') {
         errText.classList.add('hidden');
         beralihKeDashboard();
       } else {
         errText.classList.remove('hidden');
         pinBox.classList.remove('shake');
-        void pinBox.offsetWidth;
+        void pinBox.offsetWidth; // Trigger reflow untuk animasi getar
         pinBox.classList.add('shake');
-        pinInput.value = '';
-        pinInput.focus();
+        document.getElementById('login-pin').value = '';
+        document.getElementById('login-pin').focus();
       }
     });
 
